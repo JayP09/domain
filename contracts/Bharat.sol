@@ -29,7 +29,7 @@ contract Domains is ERC721URIStorage{
     mapping(string => string) public records;
 
     // make Contract payable
-    constructor(string memory _tld) payable ERC721("Bharat Name Service","BHARAT"){
+    constructor(string memory _tld) payable ERC721("Domain name","DOM"){
         tld = _tld;
         console.log("THIS IS MY DOMAINS CONTRACT. NICE.");
     }
