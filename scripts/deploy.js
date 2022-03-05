@@ -1,31 +1,34 @@
 const main = async () => {
-    const [owner,randomPerson] = await hre.ethers.getSigners();
     const domainContractFactory = await hre.ethers.getContractFactory('Domains');
-    const domainContract = await domainContractFactory.deploy('bharat');
+    const domainContract = await domainContractFactory.deploy("ajex");
     await domainContract.deployed();
-    
+  
     console.log("Contract deployed to:", domainContract.address);
-
-    console.log("Contract deployed by:",owner.address);
-
+  
+    // CHANGE THIS DOMAIN TO SOMETHING ELSE! I don't want to see OpenSea full of bananas lol
     let txn = await domainContract.register("mortal",  {value: hre.ethers.utils.parseEther('0.1')});
+      await txn.wait();
+    console.log("Minted domain banana.ninja");
+  
+    txn = await domainContract.setRecord("mortal", "Am I a mortal or a ninja??");
     await txn.wait();
-
+    console.log("Set record for mortal.bharat");
+  
     const address = await domainContract.getAddress("mortal");
-    console.log("Owner of domain mortal:", address);
+    console.log("Owner of domain banana:", address);
   
     const balance = await hre.ethers.provider.getBalance(domainContract.address);
     console.log("Contract balance:", hre.ethers.utils.formatEther(balance));
-};
-
-const runMain = async () => {
+  }
+  
+  const runMain = async () => {
     try {
-        await main();
-        process.exit(0);
+      await main();
+      process.exit(0);
     } catch (error) {
-        console.error(error);
-        process.exit(1);
+      console.log(error);
+      process.exit(1);
     }
-};
-
-runMain();
+  };
+  
+  runMain();
