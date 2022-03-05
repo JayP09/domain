@@ -8,5 +8,8 @@ module.exports = {
       url: process.env.ALCHEMY_URL,
       accounts: [process.env.PRIVATE_KEY],
 		}
+  },
+  paths: {
+    artifacts: "./domain-starter/src/artifacts"
   }
 };
