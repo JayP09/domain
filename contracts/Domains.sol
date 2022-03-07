@@ -14,6 +14,7 @@ contract Domains is ERC721URIStorage{
     // Magic given to us by OpenZeppelin to help us keep track of tokenIds.
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
+    address payable public owner;
 
     //Here's our domain TLD!
     string public tld;
@@ -28,8 +29,15 @@ contract Domains is ERC721URIStorage{
     // checkout our new mapping! this will store values
     mapping(string => string) public records;
 
+    mapping (uint => string) public names;
+
+    error Unauthorized();
+    error AlreadyRegistered();
+    error InvalidName(string name);
+
     // make Contract payable
-    constructor(string memory _tld) payable ERC721("Domain name","DOM"){
+    constructor(string memory _tld) ERC721("The Matrix Name Service","MAT") payable {
+        owner = payable(msg.sender);
         tld = _tld;
         console.log("THIS IS MY DOMAINS CONTRACT. NICE.");
     }
@@ -39,22 +47,23 @@ contract Domains is ERC721URIStorage{
         uint len = StringUtils.strlen(name);
         require(len > 0);
         if(len == 3){
-            return 5*10**17; // 5 MATIC = 5 000 000 000 000 000 000 (18 decimals). We're going with 0.5 Matic cause the faucets don't give a lot
+            return 5*10**16; // 5 MATIC = 5 000 000 000 000 000 000 (18 decimals). We're going with 0.5 Matic cause the faucets don't give a lot
         } else if(len==4) {
-            return 3*10**17; // to charge smaller amounts, reduce the decimals. This is 0.3
+            return 3*10**16; // to charge smaller amounts, reduce the decimals. This is 0.3
         } else {
-            return 1*10**17;
+            return 1*10**16;
         }
     }
 
 
     // A register function that adds their names to our mapping
     function register(string calldata name) public payable{
-        // check if domain available or not
-        require(domains[name] == address(0));
+        if (domains[name] != address(0)) revert AlreadyRegistered();
+        if (!valid(name)) revert InvalidName(name);
 
         // Check if enough Matic was paid in the transaction
         uint _price = price(name);
+        console.log(_price);
         require(msg.value >= _price, "Not enough Matic paid");
         
         domains[name] = msg.sender;
@@ -96,6 +105,8 @@ contract Domains is ERC721URIStorage{
         _setTokenURI(newRecordId, finalTokenUri);
         domains[name] = msg.sender;
 
+        names[newRecordId] = name;
+
         _tokenIds.increment();
     }
 
@@ -106,11 +117,40 @@ contract Domains is ERC721URIStorage{
 
     function setRecord(string calldata name, string calldata record) public {
         // check that the owner is the transcation sender
-        require(domains[name] == msg.sender);
+        if (msg.sender != domains[name]) revert Unauthorized();
         records[name] = record;
     }
 
     function getRecord(string calldata name) public view returns(string memory) {
         return records[name];
+    }
+
+    function getAllNames() public view returns (string[] memory){
+        console.log("Getting all names from contract");
+        string[] memory allNames = new string[](_tokenIds.current());
+        for(uint i=0; i< _tokenIds.current();i++){
+            allNames[i] = names[i];
+            console.log("Name for token %d is %s",i,allNames[i]);
+        }
+        return allNames;
+    }
+
+    modifier onlyOwner() {
+        require(isOwner());
+        _;
+    }
+
+    function isOwner() public view returns (bool) {
+        return msg.sender == owner;
+    }
+
+    function withdraw() public onlyOwner {
+        uint amount = address(this).balance;
+        (bool success,) = msg.sender.call{value: amount}(" ");
+        require(success,"Failed to withdraw Matic");
+    }
+
+    function valid(string calldata name) public pure returns(bool) {
+        return StringUtils.strlen(name) >= 3 && StringUtils.strlen(name) <= 10;
     }
 }
