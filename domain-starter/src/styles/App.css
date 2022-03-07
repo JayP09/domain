@@ -53,7 +53,7 @@
   
   .right{
     display: flex;
-    background: black;
+    background: -webkit-linear-gradient(left, #a200d6, #ff6fdf);;
     border-radius: 16px;
     padding: 12px 20px;
     height: 99%;
